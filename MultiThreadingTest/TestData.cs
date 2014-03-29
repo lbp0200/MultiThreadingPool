@@ -7,8 +7,9 @@ namespace MultiThreadingTest
 {
     public class TestData
     {
-        static TestData DataDic { get; set; }
-
+        public static TestData Data { get; private set; }
+        static object objLock = new object();
+        int seed = 0;
         static Dictionary<int, int> DataList;
         TestData()
         {
@@ -18,16 +19,41 @@ namespace MultiThreadingTest
                 DataList.Add(i, i);
             }
         }
-
-        static int GetData()
+        public static void Init()
         {
-            Random rd = new Random();
-            int index = rd.Next(DataList.Count);
-            if (DataList.Keys.Count == 1)
+            if (Data == null)
             {
-
+                Data = new TestData();
             }
-            return 0;
+        }
+        public int GetData()
+        {
+            lock (objLock)
+            {
+                Random rd = new Random(seed++);
+                int index = rd.Next(DataList.Count);
+                int key = DataList.Keys.ToList()[index];
+                if (DataList.ContainsKey(key))
+                {
+                    return DataList[key];
+                }
+                else
+                {
+                    return -1;
+                }
+            }
+        }
+
+        public void RemoveData(int key)
+        {
+            lock (objLock)
+            {
+                if (DataList.ContainsKey(key))
+                {
+                    DataList.Remove(key);
+                    Console.WriteLine("删除Key：{0}，剩余：{1}", key, DataList.Count);
+                }
+            }
         }
     }
 }
